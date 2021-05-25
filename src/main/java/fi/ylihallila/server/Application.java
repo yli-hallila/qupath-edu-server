@@ -2,6 +2,7 @@ package fi.ylihallila.server;
 
 import fi.ylihallila.server.authentication.Authenticator;
 import fi.ylihallila.server.controllers.*;
+import fi.ylihallila.server.scripts.*;
 import fi.ylihallila.server.util.Constants;
 import fi.ylihallila.server.util.Database;
 import io.javalin.Javalin;
@@ -28,6 +29,10 @@ import static io.javalin.apibuilder.ApiBuilder.*;
 import static io.javalin.core.security.SecurityUtil.roles;
 
 public class Application {
+
+    private final ScriptManager scriptManager = new ScriptManager(
+        new BackupDatabaseScript(), new RemoveOldBackupsScript(), new RemoveOrphanSlidesScript(), new RemoveTemporaryFiles()
+    );
 
     private Logger logger = LoggerFactory.getLogger(Application.class);
     private Javalin app = Javalin.create(config -> {
@@ -201,6 +206,10 @@ public class Application {
         this.SlideController = new SlideController();
         this.UserController = new UserController();
         this.FileController = new FileController();
+    }
+
+    public ScriptManager getScriptExecutor() {
+        return scriptManager;
     }
 
     private OpenApiOptions getOpenApiOptions() {

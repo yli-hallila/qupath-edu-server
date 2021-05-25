@@ -1,0 +1,48 @@
+package fi.ylihallila.server.scripts;
+
+import fi.ylihallila.server.util.Constants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+public class RemoveOldBackupsScript extends Script {
+
+    private final long A_YEAR = TimeUnit.DAYS.toMillis(365);
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    @Override String getName() {
+        return "Remove backups older than a year daily";
+    }
+
+    @Override long getInterval() {
+        return TimeUnit.DAYS.toSeconds(1);
+    }
+
+    @Override public void run() {
+        long NOW = System.currentTimeMillis();
+
+        Path backupDirectory = Path.of(Constants.BACKUP_FOLDER);
+
+        try {
+            for (File file : Files.list(backupDirectory).map(Path::toFile).collect(Collectors.toList())) {
+                if (file.isDirectory()) {
+                    continue;
+                }
+
+                if (NOW > (file.lastModified() + A_YEAR)) {
+//                    Files.delete(file.toPath());
+                    logger.info("Deleted old backup: {}", file.getName());
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Error while deleting old backups", e);
+        }
+    }
+}
